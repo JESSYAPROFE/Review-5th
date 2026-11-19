@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Miss LIMA English</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&display=swap');
+
+        :root {
+            --duo-green: #58CC02;
+            --duo-green-shadow: #46A302;
+            --duo-blue: #1CB0F6;
+            --duo-blue-shadow: #1899D6;
+            --duo-red: #FF4B4B;
+            --duo-red-shadow: #EA2B2B;
+            --duo-gray: #E5E5E5;
+            --duo-gray-shadow: #AFAFAF;
+            --duo-text: #4B4B4B;
+            --bg-color: #FFFFFF;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Nunito', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--duo-text);
+            display: flex;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #app-container {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        /* Header / Progress */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--duo-green);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .progress-bar-container {
+            flex-grow: 1;
+            margin: 0 20px;
+            background-color: var(--duo-gray);
+            height: 16px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: var(--duo-green);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .hearts {
+            color: var(--duo-red);
+            font-size: 20px;
+            font-weight: 800;
+        }
+
+        /* Main Content */
+        main {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .question-title {
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 15px;
+            color: var(--duo-blue);
+        }
+
+        .reading-text {
+            font-size: 18px;
+            background-color: #F7F7F7;
+            padding: 15px;
+            border-radius: 12px;
+            border-left: 5px solid var(--duo-blue);
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .question-text {
+            font-size: 20px;
+            margin-bottom: 25px;
+            line-height: 1.5;
+            font-weight: 700;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .options-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .option-btn {
+            background-color: white;
+            border: 2px solid var(--duo-gray);
+            border-bottom: 4px solid var(--duo-gray-shadow);
+            border-radius: 12px;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--duo-text);
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.1s;
+        }
+
+        .option-btn:hover {
+            background-color: #F7F7F7;
+        }
+
+        .option-btn.selected {
+            border-color: var(--duo-blue);
+            border-bottom-color: var(--duo-blue-shadow);
+            background-color: #DDF4FF;
+            color: var(--duo-blue);
+        }
+
+        .option-btn.correct {
+            border-color: var(--duo-green);
+            border-bottom-color: var(--duo-green-shadow);
+            background-color: #D7FFB8;
+            color: var(--duo-green);
+        }
+
+        .option-btn.wrong {
+            border-color: var(--duo-red);
+            border-bottom-color: var(--duo-red-shadow);
+            background-color: #FFDFE0;
+            color: var(--duo-red);
+        }
+
+        /* Footer / Feedback */
+        footer {
+            border-top: 2px solid var(--duo-gray);
+            padding-top: 20px;
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 90px;
+        }
+
+        .feedback {
+            display: none;
+            font-size: 20px;
+            font-weight: 800;
+            flex-grow: 1;
+        }
+
+        .feedback.correct { color: var(--duo-green); }
+        .feedback.wrong { color: var(--duo-red); }
+
+        .btn-main {
+            background-color: var(--duo-green);
+            border: none;
+            border-bottom: 4px solid var(--duo-green-shadow);
+            color: white;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: 800;
+            border-radius: 12px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.1s;
+        }
+
+        .btn-main:disabled {
+            background-color: var(--duo-gray);
+            border-bottom-color: var(--duo-gray-shadow);
+            color: #AFAFAF;
+            cursor: not-allowed;
+        }
+
+        .btn-main:active:not(:disabled) {
+            transform: translateY(2px);
+            border-bottom-width: 2px;
+        }
+
+        /* Screens */
+        .screen { display: none; }
+        .screen.active { display: flex; flex-direction: column; flex-grow: 1; }
+
+        #start-screen, #end-screen {
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        #start-screen h1, #end-screen h1 {
+            font-size: 36px;
+            color: var(--duo-green);
+            margin-bottom: 20px;
+        }
+
+        #start-screen p, #end-screen p {
+            font-size: 20px;
+            margin-bottom: 30px;
+        }
+
+        .mascot {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="app-container">
+    <!-- HEADER -->
+    <header id="app-header" style="display: none;">
+        <div class="logo">🦉 Miss LIMA English</div>
+        <div class="progress-bar-container">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        <div class="hearts">💚</div>
+    </header>
+
+    <!-- MAIN -->
+    <main>
+        <!-- START SCREEN -->
+        <div id="start-screen" class="screen active">
+            <div class="mascot">👩‍🏫</div>
+            <h1>Miss LIMA English</h1>
+            <p>Pronto para revisar para a prova do 5º ano?</p>
+            <button class="btn-main" onclick="startApp()">Começar Lição</button>
+        </div>
+
+        <!-- QUESTION SCREEN -->
+        <div id="question-screen" class="screen">
+            <h2 class="question-title" id="q-title">Complete a frase:</h2>
+            <div id="reading-box" class="reading-text" style="display: none;"></div>
+            <p class="question-text" id="q-text"></p>
+            <div class="options-grid" id="options-container">
+                <!-- Botões gerados via JS -->
+            </div>
+        </div>
+
+        <!-- END SCREEN -->
+        <div id="end-screen" class="screen">
+            <div class="mascot">🏆</div>
+            <h1>Lição Concluída!</h1>
+            <p>Você está pronto para a prova da Miss LIMA!</p>
+            <button class="btn-main" onclick="location.reload()">Estudar Novamente</button>
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer id="app-footer" style="display: none;">
+        <div class="feedback" id="feedback"></div>
+        <button class="btn-main" id="action-btn" disabled onclick="handleAction()">Verificar</button>
+    </footer>
+</div>
+
+<script>
+    // TEXTOS E PERGUNTAS (NOVO TEXTO DE READING: SEA TURTLES)
+    const questions = [
+        // Lesson 1: Vocabulary (Environment)
+        {
+            title: "Vocabulário - Meio Ambiente",
+            text: "Complete: We must save water and other natural _____.",
+            options: ["resources", "garbage", "pollution", "biodegradable"],
+            answer: "resources"
+        },
+        {
+            title: "Vocabulário - Meio Ambiente",
+            text: "Complete: A plastic bottle is not _____. It stays in nature for many years.",
+            options: ["biodegradable", "overfishing", "oil spill", "resources"],
+            answer: "biodegradable"
+        },
+        {
+            title: "Vocabulário - Meio Ambiente",
+            text: "Complete: When factories put dirty smoke in the air, it causes _____.",
+            options: ["pollution", "oil spill", "resources", "garbage"],
+            answer: "pollution"
+        },
+        {
+            title: "Vocabulário - Meio Ambiente",
+            text: "Complete: Catching too many fish from the ocean is called _____.",
+            options: ["overfishing", "pollution", "biodegradable", "garbage"],
+            answer: "overfishing"
+        },
+
+        // Lesson 2: Grammar (Used to)
+        {
+            title: "Gramática - Hábitos no Passado",
+            text: "Complete: Before there were cars, people _____ (travel) by horse.",
+            options: ["used to travel", "use to travel", "didn't use to travel", "used travel"],
+            answer: "used to travel"
+        },
+        {
+            title: "Gramática - Hábitos no Passado",
+            text: "Complete: I _____ (not / have) a cell phone when I was a child.",
+            options: ["didn't use to have", "don't use to have", "not used to have", "didn't used to have"],
+            answer: "didn't use to have"
+        },
+        {
+            title: "Gramática - Hábitos no Passado",
+            text: "Complete a pergunta: Why _____ people _____ (write) letters in the past?",
+            options: ["did / use to write", "do / used to write", "did / used to write", "were / use to write"],
+            answer: "did / use to write"
+        },
+
+        // Lesson 3: Grammar (Use it to)
+        {
+            title: "Gramática - Ferramentas e Propósitos",
+            text: "What do you do with a toothbrush?",
+            options: ["You use it to clean your teeth.", "You use it to cover your cut.", "You use it to call friends.", "You use it to watch shows."],
+            answer: "You use it to clean your teeth."
+        },
+        {
+            title: "Gramática - Ferramentas e Propósitos",
+            text: "What do you do with an umbrella?",
+            options: ["You use it to put over your head in the rain.", "You use it to drive to places.", "You use it to play video games.", "You use it to take photos."],
+            answer: "You use it to put over your head in the rain."
+        },
+        {
+            title: "Gramática - Ferramentas e Propósitos",
+            text: "What do you do with a bandage?",
+            options: ["You use it to cover your cut.", "You use it to clean your teeth.", "You use it to read comics.", "You use it to call your family."],
+            answer: "You use it to cover your cut."
+        },
+
+        // Lesson 4: Vocabulary (Hobbies)
+        {
+            title: "Vocabulário - Hobbies e Objetos",
+            text: "What is an ancient plant or animal preserved in rock?",
+            options: ["fossil", "insect", "plush toy", "comic book"],
+            answer: "fossil"
+        },
+        {
+            title: "Vocabulário - Hobbies e Objetos",
+            text: "What do you call small creatures like ants and butterflies?",
+            options: ["insects", "fossils", "video games", "photos"],
+            answer: "insects"
+        },
+
+        // Lesson 5: Reading Comprehension (NEW TEXT - Sea Turtles)
+        {
+            title: "Leitura - Amazing Sea Turtles",
+            readingText: "Sea turtles are amazing marine animals. They live in the ocean but they are reptiles, not fish! They have hard shells to protect their bodies. Mother turtles lay their eggs on the beach. When the baby turtles are born, they run to the water. Sea turtles love to eat jellyfish. However, they sometimes mistake plastic bags for food, which is very dangerous for them.",
+            text: "According to the text, are sea turtles fish?",
+            options: ["No, they are reptiles.", "Yes, they are fish.", "No, they are plants.", "Yes, they are marine mammals."],
+            answer: "No, they are reptiles."
+        },
+        {
+            title: "Leitura - Amazing Sea Turtles",
+            readingText: "Sea turtles are amazing marine animals. They live in the ocean but they are reptiles, not fish! They have hard shells to protect their bodies. Mother turtles lay their eggs on the beach. When the baby turtles are born, they run to the water. Sea turtles love to eat jellyfish. However, they sometimes mistake plastic bags for food, which is very dangerous for them.",
+            text: "Why is plastic dangerous for sea turtles?",
+            options: ["Because they mistake it for food.", "Because it is too hard.", "Because it is colorful.", "Because it covers their shells."],
+            answer: "Because they mistake it for food."
+        }
+    ];
+
+    // ESTADO DO APP
+    let currentQuestionIndex = 0;
+    let selectedOption = null;
+    let isAnswered = false;
+
+    // ELEMENTOS DO DOM
+    const startScreen = document.getElementById('start-screen');
+    const questionScreen = document.getElementById('question-screen');
+    const endScreen = document.getElementById('end-screen');
+    const appHeader = document.getElementById('app-header');
+    const appFooter = document.getElementById('app-footer');
+    const qTitle = document.getElementById('q-title');
+    const qText = document.getElementById('q-text');
+    const readingBox = document.getElementById('reading-box');
+    const optionsContainer = document.getElementById('options-container');
+    const progressBar = document.getElementById('progress-bar');
+    const feedback = document.getElementById('feedback');
+    const actionBtn = document.getElementById('action-btn');
+
+    function startApp() {
+        startScreen.classList.remove('active');
+        questionScreen.classList.add('active');
+        appHeader.style.display = 'flex';
+        appFooter.style.display = 'flex';
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        // Reset state
+        selectedOption = null;
+        isAnswered = false;
+        feedback.style.display = 'none';
+        feedback.className = 'feedback';
+        actionBtn.disabled = true;
+        actionBtn.textContent = 'Verificar';
+        actionBtn.style.backgroundColor = 'var(--duo-gray)';
+        actionBtn.style.borderBottomColor = 'var(--duo-gray-shadow)';
+        
+        // Update Progress
+        const progressPercent = (currentQuestionIndex / questions.length) * 100;
+        progressBar.style.width = `${progressPercent}%`;
+
+        // Load Data
+        const currentQ = questions[currentQuestionIndex];
+        qTitle.textContent = currentQ.title;
+        qText.textContent = currentQ.text;
+        
+        // Handle Reading Text display
+        if (currentQ.readingText) {
+            readingBox.style.display = 'block';
+            readingBox.textContent = currentQ.readingText;
+        } else {
+            readingBox.style.display = 'none';
+        }
+
+        // Render Options
+        optionsContainer.innerHTML = '';
+        const shuffledOptions = [...currentQ.options].sort(() => Math.random() - 0.5);
+        
+        shuffledOptions.forEach(option => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.textContent = option;
+            btn.onclick = () => selectOption(btn, option);
+            optionsContainer.appendChild(btn);
+        });
+    }
+
+    function selectOption(btn, option) {
+        if (isAnswered) return; 
+
+        const allBtns = optionsContainer.querySelectorAll('.option-btn');
+        allBtns.forEach(b => b.classList.remove('selected'));
+
+        btn.classList.add('selected');
+        selectedOption = option;
+
+        actionBtn.disabled = false;
+        actionBtn.style.backgroundColor = 'var(--duo-green)';
+        actionBtn.style.borderBottomColor = 'var(--duo-green-shadow)';
+    }
+
+    function handleAction() {
+        if (!isAnswered) {
+            checkAnswer();
+        } else {
+            nextQuestion();
+        }
+    }
+
+    function checkAnswer() {
+        isAnswered = true;
+        actionBtn.disabled = false;
+        actionBtn.textContent = 'Continuar';
+        
+        const currentQ = questions[currentQuestionIndex];
+        const allBtns = optionsContainer.querySelectorAll('.option-btn');
+
+        feedback.style.display = 'block';
+
+        if (selectedOption === currentQ.answer) {
+            feedback.textContent = '🎉 Muito bem! Você acertou!';
+            feedback.classList.add('correct');
+            allBtns.forEach(btn => {
+                if (btn.textContent === selectedOption) {
+                    btn.classList.remove('selected');
+                    btn.classList.add('correct');
+                }
+            });
+        } else {
+            feedback.textContent = `❌ Quase! A resposta certa é: ${currentQ.answer}`;
+            feedback.classList.add('wrong');
+            allBtns.forEach(btn => {
+                if (btn.textContent === selectedOption) {
+                    btn.classList.remove('selected');
+                    btn.classList.add('wrong');
+                }
+                if (btn.textContent === currentQ.answer) {
+                    btn.classList.add('correct');
+                }
+            });
+            actionBtn.style.backgroundColor = 'var(--duo-red)';
+            actionBtn.style.borderBottomColor = 'var(--duo-red-shadow)';
+        }
+    }
+
+    function nextQuestion() {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < questions.length) {
+            loadQuestion();
+        } else {
+            questionScreen.classList.remove('active');
+            appFooter.style.display = 'none';
+            endScreen.classList.add('active');
+            progressBar.style.width = '100%';
+        }
+    }
+</script>
+
+</body>
+</html>
