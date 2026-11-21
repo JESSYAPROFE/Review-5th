@@ -77,10 +77,11 @@
             transition: width 0.3s ease;
         }
 
-        .hearts {
-            color: var(--duo-red);
+        .score {
+            color: var(--duo-green);
             font-size: 20px;
             font-weight: 800;
+            white-space: nowrap;
         }
 
         /* Main Content */
@@ -213,6 +214,25 @@
             border-bottom-width: 2px;
         }
 
+        .btn-secondary {
+            background-color: white;
+            border: 2px solid var(--duo-gray);
+            border-bottom: 4px solid var(--duo-gray-shadow);
+            color: var(--duo-text);
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: 800;
+            border-radius: 12px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.1s;
+        }
+
+        .btn-secondary:active {
+            transform: translateY(2px);
+            border-bottom-width: 2px;
+        }
+
         /* Screens */
         .screen { display: none; }
         .screen.active { display: flex; flex-direction: column; flex-grow: 1; }
@@ -238,6 +258,100 @@
             font-size: 80px;
             margin-bottom: 20px;
         }
+
+        /* Sessions Screen */
+        .screen-title {
+            font-size: 26px;
+            font-weight: 800;
+            color: var(--duo-green);
+            margin-bottom: 6px;
+        }
+
+        .screen-subtitle {
+            font-size: 16px;
+            font-weight: 700;
+            color: #9A9A9A;
+            margin-bottom: 20px;
+        }
+
+        .sessions-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            padding-bottom: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .sessions-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .session-card {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background-color: white;
+            border: 2px solid var(--duo-gray);
+            border-bottom: 4px solid var(--duo-gray-shadow);
+            border-radius: 16px;
+            padding: 16px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.1s;
+        }
+
+        .session-card:hover {
+            background-color: #F7F7F7;
+            border-color: var(--duo-blue);
+            border-bottom-color: var(--duo-blue-shadow);
+        }
+
+        .session-card:active {
+            transform: translateY(2px);
+            border-bottom-width: 2px;
+        }
+
+        .session-card.done {
+            background-color: #F2FFE8;
+            border-color: var(--duo-green);
+            border-bottom-color: var(--duo-green-shadow);
+        }
+
+        .session-emoji {
+            font-size: 32px;
+            line-height: 1;
+        }
+
+        .session-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .session-name {
+            font-size: 17px;
+            font-weight: 800;
+            color: var(--duo-text);
+        }
+
+        .session-meta {
+            font-size: 13px;
+            font-weight: 700;
+            color: #9A9A9A;
+        }
+
+        .session-card.done .session-meta {
+            color: var(--duo-green);
+        }
+
+        .end-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+            max-width: 320px;
+        }
     </style>
 </head>
 <body>
@@ -249,7 +363,7 @@
         <div class="progress-bar-container">
             <div class="progress-bar" id="progress-bar"></div>
         </div>
-        <div class="hearts">💚</div>
+        <div class="score" id="score">0/0</div>
     </header>
 
     <!-- MAIN -->
@@ -259,7 +373,14 @@
             <div class="mascot">👩‍🏫</div>
             <h1>Miss LIMA English</h1>
             <p>Pronto para revisar para a prova do 5º ano?</p>
-            <button class="btn-main" onclick="startApp()">Começar Lição</button>
+            <button class="btn-main" onclick="showSessions()">Começar Lição</button>
+        </div>
+
+        <!-- SESSIONS SCREEN -->
+        <div id="sessions-screen" class="screen">
+            <h2 class="screen-title">Escolha uma sessão</h2>
+            <p class="screen-subtitle">Cada sessão tem um tema com várias perguntas.</p>
+            <div class="sessions-grid" id="sessions-grid"></div>
         </div>
 
         <!-- QUESTION SCREEN -->
@@ -274,10 +395,13 @@
 
         <!-- END SCREEN -->
         <div id="end-screen" class="screen">
-            <div class="mascot">🏆</div>
-            <h1>Lição Concluída!</h1>
-            <p>Você está pronto para a prova da Miss LIMA!</p>
-            <button class="btn-main" onclick="location.reload()">Estudar Novamente</button>
+            <div class="mascot" id="end-mascot">🏆</div>
+            <h1 id="end-title">Sessão Concluída!</h1>
+            <p id="end-score"></p>
+            <div class="end-actions">
+                <button class="btn-main" id="next-session-btn" onclick="nextSession()">Próxima Sessão</button>
+                <button class="btn-secondary" onclick="showSessions()">Escolher Sessão</button>
+            </div>
         </div>
     </main>
 
@@ -289,112 +413,285 @@
 </div>
 
 <script>
-    // TEXTOS E PERGUNTAS (NOVO TEXTO DE READING: SEA TURTLES)
-    const questions = [
-        // Lesson 1: Vocabulary (Environment)
-        {
-            title: "Vocabulary - Environment",
-            text: "Complete: We must save water and other natural _____.",
-            options: ["resources", "garbage", "pollution", "biodegradable"],
-            answer: "resources"
-        },
-        {
-            title: "Vocabulary - Environment",
-            text: "Complete: A plastic bottle is not _____. It stays in nature for many years.",
-            options: ["biodegradable", "overfishing", "oil spill", "resources"],
-            answer: "biodegradable"
-        },
-        {
-            title: "Vocabulary - Environment",
-            text: "Complete: When factories put dirty smoke in the air, it causes _____.",
-            options: ["pollution", "oil spill", "resources", "garbage"],
-            answer: "pollution"
-        },
-        {
-            title: "Vocabulary - Environment",
-            text: "Complete: Catching too many fish from the ocean is called _____.",
-            options: ["overfishing", "pollution", "biodegradable", "garbage"],
-            answer: "overfishing"
-        },
+    const SEA_TURTLES_TEXT = "Sea turtles are amazing marine animals. They live in the ocean but they are reptiles, not fish! They have hard shells to protect their bodies. Mother turtles lay their eggs on the beach. When the baby turtles are born, they run to the water. Sea turtles love to eat jellyfish. However, they sometimes mistake plastic bags for food, which is very dangerous for them.";
 
-        // Lesson 2: Grammar (Used to)
+    // SESSÕES: cada tema tem seu próprio conjunto de perguntas
+    const sessions = [
         {
-            title: "Gramática - Hábitos no Passado",
-            text: "Complete: Before there were cars, people _____ (travel) by horse.",
-            options: ["used to travel", "use to travel", "didn't use to travel", "used travel"],
-            answer: "used to travel"
+            id: 'environment',
+            emoji: '🍃',
+            title: 'Vocabulary - Environment',
+            subtitle: 'Meio Ambiente',
+            questions: [
+                {
+                    text: 'Complete: We must save water and other natural _____.',
+                    options: ['🌱 resources', '🗑️ garbage', '🏭 pollution', '♻️ biodegradable'],
+                    answer: '🌱 resources'
+                },
+                {
+                    text: 'Complete: A plastic bottle is not _____. It stays in nature for many years.',
+                    options: ['♻️ biodegradable', '🎣 overfishing', '🛢️ oil spill', '🌱 resources'],
+                    answer: '♻️ biodegradable'
+                },
+                {
+                    text: 'Complete: When factories put dirty smoke in the air, it causes _____.',
+                    options: ['🏭 pollution', '🛢️ oil spill', '🌱 resources', '🗑️ garbage'],
+                    answer: '🏭 pollution'
+                },
+                {
+                    text: 'Complete: Catching too many fish from the ocean is called _____.',
+                    options: ['🎣 overfishing', '🏭 pollution', '♻️ biodegradable', '🗑️ garbage'],
+                    answer: '🎣 overfishing'
+                },
+                {
+                    text: 'Complete: When a ship spills oil into the sea, we call it an _____.',
+                    options: ['🛢️ oil spill', '🎣 overfishing', '🌱 resources', '🌬️ oxygen'],
+                    answer: '🛢️ oil spill'
+                },
+                {
+                    text: 'Complete: Trees and plants give us _____ to breathe.',
+                    options: ['🌬️ oxygen', '🗑️ garbage', '🏭 pollution', '🎣 overfishing'],
+                    answer: '🌬️ oxygen'
+                },
+                {
+                    text: 'Complete: The 3 Rs are Reduce, Reuse and _____.',
+                    options: ['♻️ recycle', '🌱 resources', '🗑️ garbage', '🏭 pollution'],
+                    answer: '♻️ recycle'
+                },
+                {
+                    text: 'Complete: Old paper, glass and plastic go in the _____ bin.',
+                    options: ['♻️ recycling', '🌬️ oxygen', '🎣 overfishing', '🛢️ oil spill'],
+                    answer: '♻️ recycling'
+                }
+            ]
         },
         {
-            title: "Gramática - Hábitos no Passado",
-            text: "Complete: I _____ (not / have) a cell phone when I was a child.",
-            options: ["didn't use to have", "don't use to have", "not used to have", "didn't used to have"],
-            answer: "didn't use to have"
+            id: 'past-habits',
+            emoji: '⏳',
+            title: 'Grammar - Past Habits',
+            subtitle: 'used to',
+            questions: [
+                {
+                    text: 'Complete: Before there were cars, people _____ (travel) by horse.',
+                    options: ['used to travel', 'use to travel', "didn't use to travel", 'used travel'],
+                    answer: 'used to travel'
+                },
+                {
+                    text: 'Complete: I _____ (not / have) a cell phone when I was a child.',
+                    options: ["didn't use to have", "don't use to have", 'not used to have', "didn't used to have"],
+                    answer: "didn't use to have"
+                },
+                {
+                    text: 'Complete the question: Why _____ people _____ (write) letters in the past?',
+                    options: ['did / use to write', 'do / used to write', 'did / used to write', 'were / use to write'],
+                    answer: 'did / use to write'
+                },
+                {
+                    text: 'Complete: My grandmother _____ (listen) to the radio every night.',
+                    options: ['used to listen', 'use to listen', 'used listening', "didn't use to listen"],
+                    answer: 'used to listen'
+                },
+                {
+                    text: 'Complete: _____ you _____ (play) with dolls when you were little?',
+                    options: ['Did / use to play', 'Did / used to play', 'Do / use to play', 'Were / use to play'],
+                    answer: 'Did / use to play'
+                },
+                {
+                    text: 'Complete: People _____ (not / watch) videos on the internet in 1990.',
+                    options: ["didn't use to watch", "don't use to watch", 'not used to watch', "didn't used to watch"],
+                    answer: "didn't use to watch"
+                },
+                {
+                    text: 'Choose the CORRECT sentence:',
+                    options: [
+                        'She used to ride a bike to school.',
+                        'She use to rode a bike to school.',
+                        'She used to rode a bike to school.',
+                        'She use to ride a bike to school.'
+                    ],
+                    answer: 'She used to ride a bike to school.'
+                }
+            ]
         },
         {
-            title: "Gramática - Hábitos no Passado",
-            text: "Complete a pergunta: Why _____ people _____ (write) letters in the past?",
-            options: ["did / use to write", "do / used to write", "did / used to write", "were / use to write"],
-            answer: "did / use to write"
+            id: 'tools',
+            emoji: '🛠️',
+            title: 'Grammar - Tools and Purposes',
+            subtitle: 'use it to',
+            questions: [
+                {
+                    text: 'What do you do with a toothbrush? 🪥',
+                    options: [
+                        'You use it to clean your teeth.',
+                        'You use it to cover your cut.',
+                        'You use it to call friends.',
+                        'You use it to watch shows.'
+                    ],
+                    answer: 'You use it to clean your teeth.'
+                },
+                {
+                    text: 'What do you do with an umbrella? ☂️',
+                    options: [
+                        'You use it to put over your head in the rain.',
+                        'You use it to drive to places.',
+                        'You use it to play video games.',
+                        'You use it to take photos.'
+                    ],
+                    answer: 'You use it to put over your head in the rain.'
+                },
+                {
+                    text: 'What do you do with a bandage? 🩹',
+                    options: [
+                        'You use it to cover your cut.',
+                        'You use it to clean your teeth.',
+                        'You use it to read comics.',
+                        'You use it to call your family.'
+                    ],
+                    answer: 'You use it to cover your cut.'
+                },
+                {
+                    text: 'What do you do with a pair of scissors? ✂️',
+                    options: [
+                        'You use it to cut paper.',
+                        'You use it to keep warm at night.',
+                        'You use it to eat soup.',
+                        'You use it to listen to music.'
+                    ],
+                    answer: 'You use it to cut paper.'
+                },
+                {
+                    text: 'What do you do with a pillow? 🛏️',
+                    options: [
+                        'You use it to sleep comfortably.',
+                        'You use it to cut paper.',
+                        'You use it to clean the floor.',
+                        'You use it to brush your hair.'
+                    ],
+                    answer: 'You use it to sleep comfortably.'
+                },
+                {
+                    text: 'What do you do with a pencil? ✏️',
+                    options: [
+                        'You use it to write in your notebook.',
+                        'You use it to cook dinner.',
+                        'You use it to open a bottle.',
+                        'You use it to wash the dishes.'
+                    ],
+                    answer: 'You use it to write in your notebook.'
+                },
+                {
+                    text: 'What do you do with a phone? 📱',
+                    options: [
+                        'You use it to call your family.',
+                        'You use it to sweep the floor.',
+                        'You use it to cut your food.',
+                        'You use it to dry your clothes.'
+                    ],
+                    answer: 'You use it to call your family.'
+                }
+            ]
         },
-
-        // Lesson 3: Grammar (Use it to)
         {
-            title: "Gramática - Ferramentas e Propósitos",
-            text: "What do you do with a toothbrush?",
-            options: ["You use it to clean your teeth.", "You use it to cover your cut.", "You use it to call friends.", "You use it to watch shows."],
-            answer: "You use it to clean your teeth."
+            id: 'hobbies',
+            emoji: '🧩',
+            title: 'Vocabulary - Hobbies and Objects',
+            subtitle: 'Hobbies e Objetos',
+            questions: [
+                {
+                    text: 'What is an ancient plant or animal preserved in rock? 🦴',
+                    options: ['a fossil', 'an insect', 'a plush toy', 'a comic book'],
+                    answer: 'a fossil'
+                },
+                {
+                    text: 'What do you call small creatures like ants and butterflies? 🐜',
+                    options: ['insects', 'fossils', 'video games', 'photos'],
+                    answer: 'insects'
+                },
+                {
+                    text: 'Which object has stories told with pictures? 📚',
+                    options: ['a comic book', 'a fossil', 'an insect', 'a video game'],
+                    answer: 'a comic book'
+                },
+                {
+                    text: 'Which object is soft and you can hug? 🧸',
+                    options: ['a plush toy', 'a fossil', 'a comic book', 'an insect'],
+                    answer: 'a plush toy'
+                },
+                {
+                    text: 'What do you play on a screen with your friends? 🎮',
+                    options: ['a video game', 'a plush toy', 'a fossil', 'a comic book'],
+                    answer: 'a video game'
+                },
+                {
+                    text: 'What do you use to take pictures? 📷',
+                    options: ['a camera', 'a fossil', 'a plush toy', 'a video game'],
+                    answer: 'a camera'
+                },
+                {
+                    text: 'Which hobby uses a bicycle? 🚲',
+                    options: ['cycling', 'reading', 'collecting fossils', 'playing video games'],
+                    answer: 'cycling'
+                }
+            ]
         },
         {
-            title: "Gramática - Ferramentas e Propósitos",
-            text: "What do you do with an umbrella?",
-            options: ["You use it to put over your head in the rain.", "You use it to drive to places.", "You use it to play video games.", "You use it to take photos."],
-            answer: "You use it to put over your head in the rain."
-        },
-        {
-            title: "Gramática - Ferramentas e Propósitos",
-            text: "What do you do with a bandage?",
-            options: ["You use it to cover your cut.", "You use it to clean your teeth.", "You use it to read comics.", "You use it to call your family."],
-            answer: "You use it to cover your cut."
-        },
-
-        // Lesson 4: Vocabulary (Hobbies)
-        {
-            title: "Vocabulary - Hobbies and Objects",
-            text: "What is an ancient plant or animal preserved in rock?",
-            options: ["fossil", "insect", "plush toy", "comic book"],
-            answer: "fossil"
-        },
-        {
-            title: "Vocabulary - Hobbies and Objects",
-            text: "What do you call small creatures like ants and butterflies?",
-            options: ["insects", "fossils", "video games", "photos"],
-            answer: "insects"
-        },
-
-        // Lesson 5: Reading Comprehension (NEW TEXT - Sea Turtles)
-        {
-            title: "Leitura - Amazing Sea Turtles",
-            readingText: "Sea turtles are amazing marine animals. They live in the ocean but they are reptiles, not fish! They have hard shells to protect their bodies. Mother turtles lay their eggs on the beach. When the baby turtles are born, they run to the water. Sea turtles love to eat jellyfish. However, they sometimes mistake plastic bags for food, which is very dangerous for them.",
-            text: "According to the text, are sea turtles fish?",
-            options: ["No, they are reptiles.", "Yes, they are fish.", "No, they are plants.", "Yes, they are marine mammals."],
-            answer: "No, they are reptiles."
-        },
-        {
-            title: "Leitura - Amazing Sea Turtles",
-            readingText: "Sea turtles are amazing marine animals. They live in the ocean but they are reptiles, not fish! They have hard shells to protect their bodies. Mother turtles lay their eggs on the beach. When the baby turtles are born, they run to the water. Sea turtles love to eat jellyfish. However, they sometimes mistake plastic bags for food, which is very dangerous for them.",
-            text: "Why is plastic dangerous for sea turtles?",
-            options: ["Because they mistake it for food.", "Because it is too hard.", "Because it is colorful.", "Because it covers their shells."],
-            answer: "Because they mistake it for food."
+            id: 'reading',
+            emoji: '🐢',
+            title: 'Reading - Amazing Sea Turtles',
+            subtitle: 'Leitura e Interpretação',
+            questions: [
+                {
+                    readingText: SEA_TURTLES_TEXT,
+                    text: 'According to the text, are sea turtles fish?',
+                    options: ['No, they are reptiles.', 'Yes, they are fish.', 'No, they are plants.', 'Yes, they are marine mammals.'],
+                    answer: 'No, they are reptiles.'
+                },
+                {
+                    readingText: SEA_TURTLES_TEXT,
+                    text: 'Why is plastic dangerous for sea turtles?',
+                    options: ['Because they mistake it for food.', 'Because it is too hard.', 'Because it is colorful.', 'Because it covers their shells.'],
+                    answer: 'Because they mistake it for food.'
+                },
+                {
+                    readingText: SEA_TURTLES_TEXT,
+                    text: 'Where do mother turtles lay their eggs?',
+                    options: ['On the beach.', 'In the deep ocean.', 'Under the rocks.', 'In the forest.'],
+                    answer: 'On the beach.'
+                },
+                {
+                    readingText: SEA_TURTLES_TEXT,
+                    text: 'What do sea turtles love to eat?',
+                    options: ['Jellyfish.', 'Plastic bags.', 'Sea plants.', 'Small fish.'],
+                    answer: 'Jellyfish.'
+                },
+                {
+                    readingText: SEA_TURTLES_TEXT,
+                    text: 'What protects the body of a sea turtle?',
+                    options: ['A hard shell.', 'A big fin.', 'Soft fur.', 'Long legs.'],
+                    answer: 'A hard shell.'
+                },
+                {
+                    readingText: SEA_TURTLES_TEXT,
+                    text: 'When the baby turtles are born, where do they run?',
+                    options: ['To the water.', 'To the rocks.', 'To the trees.', 'To the sand hills.'],
+                    answer: 'To the water.'
+                }
+            ]
         }
     ];
 
     // ESTADO DO APP
+    let currentSessionIndex = -1;
     let currentQuestionIndex = 0;
     let selectedOption = null;
     let isAnswered = false;
+    let correctCount = 0;
+    const results = {};
 
     // ELEMENTOS DO DOM
     const startScreen = document.getElementById('start-screen');
+    const sessionsScreen = document.getElementById('sessions-screen');
+    const sessionsGrid = document.getElementById('sessions-grid');
     const questionScreen = document.getElementById('question-screen');
     const endScreen = document.getElementById('end-screen');
     const appHeader = document.getElementById('app-header');
@@ -406,17 +703,68 @@
     const progressBar = document.getElementById('progress-bar');
     const feedback = document.getElementById('feedback');
     const actionBtn = document.getElementById('action-btn');
+    const scoreLabel = document.getElementById('score');
+    const endMascot = document.getElementById('end-mascot');
+    const endTitle = document.getElementById('end-title');
+    const endScore = document.getElementById('end-score');
+    const nextSessionBtn = document.getElementById('next-session-btn');
 
-    function startApp() {
-        startScreen.classList.remove('active');
+    function hideAllScreens() {
+        [startScreen, sessionsScreen, questionScreen, endScreen].forEach(screen => screen.classList.remove('active'));
+    }
+
+    function currentSession() {
+        return sessions[currentSessionIndex];
+    }
+
+    function showSessions() {
+        hideAllScreens();
+        appHeader.style.display = 'none';
+        appFooter.style.display = 'none';
+        sessionsScreen.classList.add('active');
+        renderSessions();
+    }
+
+    function renderSessions() {
+        sessionsGrid.innerHTML = '';
+        sessions.forEach((session, index) => {
+            const result = results[session.id];
+            const card = document.createElement('button');
+            card.className = 'session-card' + (result ? ' done' : '');
+            const meta = result
+                ? `✅ ${result.correct}/${result.total} acertos`
+                : `${session.questions.length} perguntas`;
+            card.innerHTML =
+                `<span class="session-emoji">${session.emoji}</span>` +
+                `<span class="session-info">` +
+                    `<span class="session-name">${session.title}</span>` +
+                    `<span class="session-meta">${session.subtitle} · ${meta}</span>` +
+                `</span>`;
+            card.onclick = () => startSession(index);
+            sessionsGrid.appendChild(card);
+        });
+    }
+
+    function startSession(index) {
+        currentSessionIndex = index;
+        currentQuestionIndex = 0;
+        correctCount = 0;
+        hideAllScreens();
         questionScreen.classList.add('active');
         appHeader.style.display = 'flex';
         appFooter.style.display = 'flex';
+        updateScore();
         loadQuestion();
     }
 
+    function updateScore() {
+        scoreLabel.textContent = `${correctCount}/${currentSession().questions.length}`;
+    }
+
     function loadQuestion() {
-        // Reset state
+        const session = currentSession();
+        const currentQ = session.questions[currentQuestionIndex];
+
         selectedOption = null;
         isAnswered = false;
         feedback.style.display = 'none';
@@ -425,17 +773,13 @@
         actionBtn.textContent = 'Verificar';
         actionBtn.style.backgroundColor = 'var(--duo-gray)';
         actionBtn.style.borderBottomColor = 'var(--duo-gray-shadow)';
-        
-        // Update Progress
-        const progressPercent = (currentQuestionIndex / questions.length) * 100;
+
+        const progressPercent = (currentQuestionIndex / session.questions.length) * 100;
         progressBar.style.width = `${progressPercent}%`;
 
-        // Load Data
-        const currentQ = questions[currentQuestionIndex];
-        qTitle.textContent = currentQ.title;
+        qTitle.textContent = `${session.emoji} ${session.title}`;
         qText.textContent = currentQ.text;
-        
-        // Handle Reading Text display
+
         if (currentQ.readingText) {
             readingBox.style.display = 'block';
             readingBox.textContent = currentQ.readingText;
@@ -443,10 +787,9 @@
             readingBox.style.display = 'none';
         }
 
-        // Render Options
         optionsContainer.innerHTML = '';
         const shuffledOptions = [...currentQ.options].sort(() => Math.random() - 0.5);
-        
+
         shuffledOptions.forEach(option => {
             const btn = document.createElement('button');
             btn.className = 'option-btn';
@@ -457,10 +800,9 @@
     }
 
     function selectOption(btn, option) {
-        if (isAnswered) return; 
+        if (isAnswered) return;
 
-        const allBtns = optionsContainer.querySelectorAll('.option-btn');
-        allBtns.forEach(b => b.classList.remove('selected'));
+        optionsContainer.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
 
         btn.classList.add('selected');
         selectedOption = option;
@@ -482,13 +824,15 @@
         isAnswered = true;
         actionBtn.disabled = false;
         actionBtn.textContent = 'Continuar';
-        
-        const currentQ = questions[currentQuestionIndex];
+
+        const currentQ = currentSession().questions[currentQuestionIndex];
         const allBtns = optionsContainer.querySelectorAll('.option-btn');
 
         feedback.style.display = 'block';
 
         if (selectedOption === currentQ.answer) {
+            correctCount++;
+            updateScore();
             feedback.textContent = '🎉 Muito bem! Você acertou!';
             feedback.classList.add('correct');
             allBtns.forEach(btn => {
@@ -516,13 +860,36 @@
 
     function nextQuestion() {
         currentQuestionIndex++;
-        if (currentQuestionIndex < questions.length) {
+        if (currentQuestionIndex < currentSession().questions.length) {
             loadQuestion();
         } else {
-            questionScreen.classList.remove('active');
-            appFooter.style.display = 'none';
-            endScreen.classList.add('active');
-            progressBar.style.width = '100%';
+            finishSession();
+        }
+    }
+
+    function finishSession() {
+        const session = currentSession();
+        const total = session.questions.length;
+        const allRight = correctCount === total;
+
+        results[session.id] = { correct: correctCount, total: total };
+
+        progressBar.style.width = '100%';
+        appFooter.style.display = 'none';
+        hideAllScreens();
+        endScreen.classList.add('active');
+
+        endMascot.textContent = allRight ? '🏆' : '💪';
+        endTitle.textContent = allRight ? 'Perfeito!' : 'Sessão Concluída!';
+        endScore.textContent = `Você acertou ${correctCount} de ${total} em "${session.title}".`;
+
+        const hasNext = currentSessionIndex + 1 < sessions.length;
+        nextSessionBtn.style.display = hasNext ? 'block' : 'none';
+    }
+
+    function nextSession() {
+        if (currentSessionIndex + 1 < sessions.length) {
+            startSession(currentSessionIndex + 1);
         }
     }
 </script>
